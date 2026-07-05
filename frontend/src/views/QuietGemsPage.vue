@@ -48,5 +48,13 @@ watch(() => countryStore.country, () => store.fetch())
     </div>
 
     <QuietGemTable :filtered="filtered" />
+
+    <div class="flex items-center gap-4 mt-3 text-[11px] text-slate-500">
+      <span class="text-slate-600">潜力图例：</span>
+      <span class="flex items-center gap-1"><span class="inline-block w-3 h-1 rounded-full bg-gradient-to-r from-amber-400 to-danger"></span> 80+</span>
+      <span class="flex items-center gap-1"><span class="inline-block w-3 h-1 rounded-full bg-gradient-to-r from-warn to-orange-500"></span> 60+</span>
+      <span class="flex items-center gap-1"><span class="inline-block w-3 h-1 rounded-full bg-gradient-to-r from-accent-glow to-accent"></span> 40+</span>
+      <span class="flex items-center gap-1"><span class="inline-block w-3 h-1 rounded-full bg-gradient-to-r from-slate-500 to-slate-400"></span> &lt;40</span>
+    </div>
   </div>
 </template>

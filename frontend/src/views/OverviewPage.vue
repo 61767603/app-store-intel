@@ -5,15 +5,16 @@ import CategoryBarChart from '../components/charts/CategoryBarChart.vue'
 import GemTypePie from '../components/charts/GemTypePie.vue'
 import RevenueScatter from '../components/charts/RevenueScatter.vue'
 import { useOverviewStore } from '../stores/overview'
-import { useQuietGemsStore, useLowRatingStore } from '../stores/chartData'
+import { useQuietGemsStore, useLowRatingStore, useIndieGemsStore } from '../stores/chartData'
 
 const overviewStore = useOverviewStore()
 const quietStore = useQuietGemsStore()
 const lowStore = useLowRatingStore()
+const indieStore = useIndieGemsStore()
 
 onMounted(async () => {
   await overviewStore.fetch()
-  await Promise.all([quietStore.fetch(), lowStore.fetch()])
+  await Promise.all([quietStore.fetch(), lowStore.fetch(), indieStore.fetch()])
 })
 </script>
 
@@ -26,7 +27,7 @@ onMounted(async () => {
     </div>
     <StatsGrid :overview="overviewStore.data" />
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-8">
-      <CategoryBarChart :quiet-gems="quietStore.data" :low-rating="lowStore.data" />
+      <CategoryBarChart :quiet-gems="quietStore.data" :indie-gems="indieStore.data" :low-rating="lowStore.data" />
       <GemTypePie
         :quiet-count="overviewStore.data?.quiet_count ?? 0"
         :indie-count="overviewStore.data?.indie_count ?? 0"

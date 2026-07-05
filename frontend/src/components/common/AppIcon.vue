@@ -28,6 +28,6 @@ const sizeClass = computed(() => props.size === 'sm' ? 'w-6 h-6 text-xs' : 'w-10
     <span
       :class="[sizeClass, 'rounded-lg bg-accent/20 text-accent-glow font-bold items-center justify-center shrink-0', iconUrl ? 'hidden' : 'flex']"
     >{{ letter }}</span>
-    <span class="max-w-[160px] truncate text-xs">{{ appName || '未知' }}</span>
+    <span class="max-w-[160px] truncate text-xs" :title="appName || ''">{{ appName || '未知' }}</span>
   </a>
 </template>

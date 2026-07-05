@@ -17,14 +17,14 @@ function arrow(k: string) { return sortState.key !== k ? '' : sortState.dir === 
   <div class="card overflow-hidden !p-0">
     <div class="overflow-x-auto">
       <table class="w-full text-xs border-collapse">
-        <thead>
+        <thead class="sticky top-0 z-10">
           <tr class="border-b border-slate-700/30 bg-slate-800/30">
             <th @click="toggleSort('rank','num')" class="px-4 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300"># {{ arrow('rank') }}</th>
             <th class="px-4 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider">应用</th>
             <th class="px-4 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider">开发者</th>
             <th @click="toggleSort('rating_avg','num')" class="px-4 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">评分 {{ arrow('rating_avg') }}</th>
-            <th @click="toggleSort('rating_count','num')" class="px-4 py-2.5 text-[11px] text-right text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">评分数 {{ arrow('rating_count') }}</th>
-            <th @click="toggleSort('price_sort','num')" class="px-4 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">价格 {{ arrow('price_sort') }}</th>
+            <th @click="toggleSort('rating_count','num')" class="px-4 py-2.5 text-[11px] text-right text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300 pr-5">评分数 {{ arrow('rating_count') }}</th>
+            <th @click="toggleSort('price_sort','num')" class="px-4 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300 pl-5">价格 {{ arrow('price_sort') }}</th>
             <th @click="toggleSort('est_downloads','num')" class="px-4 py-2.5 text-[11px] text-right text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">预估下载 {{ arrow('est_downloads') }}</th>
             <th @click="toggleSort('est_revenue_high','num')" class="px-4 py-2.5 text-[11px] text-right text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">预估收入 {{ arrow('est_revenue_high') }}</th>
           </tr>
@@ -35,8 +35,8 @@ function arrow(k: string) { return sortState.key !== k ? '' : sortState.dir === 
             <td class="px-4 py-3"><AppIcon :icon-url="row.icon_url" :app-name="row.app_name" :app-id="row.app_id" /></td>
             <td class="px-4 py-3 text-slate-500 max-w-[160px] truncate text-xs">{{ row.developer_name || '-' }}</td>
             <td class="px-4 py-3"><RatingStars :rating="row.rating_avg" /></td>
-            <td class="px-4 py-3 text-right text-slate-400 font-mono tabular-nums tracking-tight">{{ formatCount(row.rating_count) }}</td>
-            <td class="px-4 py-3"><PriceBadge :price="row.price" /></td>
+            <td class="px-4 py-3 text-right text-slate-400 font-mono tabular-nums tracking-tight pr-5">{{ formatCount(row.rating_count) }}</td>
+            <td class="px-4 py-3 pl-5"><PriceBadge :price="row.price" /></td>
             <td class="px-4 py-3 text-right text-slate-200 font-mono tabular-nums tracking-tight">{{ formatDownloads(row.est_downloads) }}</td>
             <td class="px-4 py-3 text-right text-slate-200 font-mono tabular-nums tracking-tight">{{ formatRevenue(row.est_revenue_low, row.est_revenue_high) }}</td>
           </tr>

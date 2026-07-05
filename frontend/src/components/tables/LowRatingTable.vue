@@ -19,15 +19,15 @@ function arrow(k: string) { return sortState.key !== k ? '' : sortState.dir === 
   <div class="card overflow-hidden !p-0">
     <div class="overflow-x-auto">
       <table class="w-full text-xs border-collapse">
-        <thead>
+        <thead class="sticky top-0 z-10">
           <tr class="border-b border-slate-700/30 bg-slate-800/30">
             <th @click="toggleSort('rank_category','num')" class="px-3 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">分类# {{ arrow('rank_category') }}</th>
             <th @click="toggleSort('overall_rank','num')" class="px-3 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">总榜 {{ arrow('overall_rank') }}</th>
             <th @click="toggleSort('category_name','str')" class="px-3 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">分类 {{ arrow('category_name') }}</th>
             <th @click="toggleSort('app_name','str')" class="px-3 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">应用 {{ arrow('app_name') }}</th>
             <th @click="toggleSort('developer_name','str')" class="px-3 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">开发者 {{ arrow('developer_name') }}</th>
-            <th @click="toggleSort('rating_count','num')" class="px-3 py-2.5 text-[11px] text-right text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">评分数 {{ arrow('rating_count') }}</th>
-            <th @click="toggleSort('rating_avg','num')" class="px-3 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">评分 {{ arrow('rating_avg') }}</th>
+            <th @click="toggleSort('rating_count','num')" class="px-3 py-2.5 text-[11px] text-right text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300 pr-4">评分数 {{ arrow('rating_count') }}</th>
+            <th @click="toggleSort('rating_avg','num')" class="px-3 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300 pl-4">评分 {{ arrow('rating_avg') }}</th>
             <th @click="toggleSort('price_sort','num')" class="px-3 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">价格 {{ arrow('price_sort') }}</th>
             <th @click="toggleSort('est_downloads','num')" class="px-3 py-2.5 text-[11px] text-right text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">预估下载 {{ arrow('est_downloads') }}</th>
             <th @click="toggleSort('est_revenue_high','num')" class="px-3 py-2.5 text-[11px] text-right text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">预估收入 {{ arrow('est_revenue_high') }}</th>
@@ -41,8 +41,8 @@ function arrow(k: string) { return sortState.key !== k ? '' : sortState.dir === 
             <td class="px-3 py-3 text-slate-500 text-xs">{{ row.category_name }}</td>
             <td class="px-3 py-3 min-w-[180px]"><AppIcon :icon-url="row.icon_url" :app-name="row.app_name" :app-id="row.app_id" /></td>
             <td class="px-3 py-3 text-slate-500 max-w-[130px] truncate text-xs">{{ row.developer_name || '-' }}</td>
-            <td class="px-3 py-3 text-right text-slate-400 font-mono tabular-nums tracking-tight">{{ formatCount(row.rating_count) }}</td>
-            <td class="px-3 py-3"><RatingStars :rating="row.rating_avg" /></td>
+            <td class="px-3 py-3 text-right text-slate-400 font-mono tabular-nums tracking-tight pr-4">{{ formatCount(row.rating_count) }}</td>
+            <td class="px-3 py-3 pl-4"><RatingStars :rating="row.rating_avg" /></td>
             <td class="px-3 py-3"><PriceBadge :price="row.price" /></td>
             <td class="px-3 py-3 text-right text-slate-200 font-mono tabular-nums tracking-tight">{{ formatDownloads(row.est_downloads) }}</td>
             <td class="px-3 py-3 text-right text-slate-200 font-mono tabular-nums tracking-tight">{{ formatRevenue(row.est_revenue_low, row.est_revenue_high) }}</td>
