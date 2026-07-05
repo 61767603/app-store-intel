@@ -8,8 +8,7 @@ const props = defineProps<{
   size?: 'sm' | 'md'
 }>()
 
-// 用 itunes.apple.com 避免 Apple 强制 CN 重定向导致非CN区 App 跳到 Today 页
-const href = computed(() => `https://itunes.apple.com/app/id${props.appId}`)
+const href = computed(() => `https://www.qimai.cn/app/rank/appid/${props.appId}/country/us`)
 const letter = computed(() => (props.appName || '?')[0].toUpperCase())
 const sizeClass = computed(() => props.size === 'sm' ? 'w-6 h-6 text-xs' : 'w-10 h-10 text-lg')
 </script>
