@@ -5,14 +5,11 @@ const props = defineProps<{
   iconUrl: string | null | undefined
   appName: string | null | undefined
   appId: string
-  country?: string
   size?: 'sm' | 'md'
 }>()
 
-const href = computed(() => {
-  const cc = props.country || 'us'
-  return `https://apps.apple.com/${cc}/app/id${props.appId}`
-})
+// 用 itunes.apple.com 避免 Apple 强制 CN 重定向导致非CN区 App 跳到 Today 页
+const href = computed(() => `https://itunes.apple.com/app/id${props.appId}`)
 const letter = computed(() => (props.appName || '?')[0].toUpperCase())
 const sizeClass = computed(() => props.size === 'sm' ? 'w-6 h-6 text-xs' : 'w-10 h-10 text-lg')
 </script>

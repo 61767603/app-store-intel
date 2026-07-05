@@ -28,7 +28,7 @@ onMounted(() => store.fetchAll())
           <a
             v-for="app in store.topByCategory[cat.id]"
             :key="app.app_id"
-            :href="`https://apps.apple.com/app/id${app.app_id}`"
+            :href="`https://itunes.apple.com/app/id${app.app_id}`"
             target="_blank"
             class="flex items-center gap-2.5 px-4 py-2.5 hover:bg-slate-800/40 transition-colors"
           >

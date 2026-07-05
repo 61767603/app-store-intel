@@ -32,7 +32,7 @@ function arrow(k: string) { return sortState.key !== k ? '' : sortState.dir === 
         <tbody class="divide-y divide-slate-800/30">
           <tr v-for="row in sorted" :key="row.app_id" class="hover:bg-slate-800/40 transition-colors">
             <td class="px-4 py-3"><span class="inline-block px-1.5 py-px rounded text-[11px] font-mono font-bold text-slate-400">{{ row.rank }}</span></td>
-            <td class="px-4 py-3"><AppIcon :icon-url="row.icon_url" :app-name="row.app_name" :app-id="row.app_id" :country="row.country" /></td>
+            <td class="px-4 py-3"><AppIcon :icon-url="row.icon_url" :app-name="row.app_name" :app-id="row.app_id" /></td>
             <td class="px-4 py-3 text-slate-500 max-w-[160px] truncate text-xs">{{ row.developer_name || '-' }}</td>
             <td class="px-4 py-3"><RatingStars :rating="row.rating_avg" /></td>
             <td class="px-4 py-3 text-right text-slate-400 font-mono tabular-nums tracking-tight pr-5">{{ formatCount(row.rating_count) }}</td>
