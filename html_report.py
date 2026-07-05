@@ -47,34 +47,38 @@ KNOWN_PUBLISHERS = [
 ]
 
 
-OVERALL_BASE = 156000
-POWER_ALPHA = 0.94
+OVERALL_BASE = 156000        # US non-game #1 daily (Sensor Tower 2022)
+POWER_ALPHA = 0.48           # b ≈ 0.477 → 0.48 (derived from #1=156k, #10=52k)
+GAME_POWER_ALPHA = 0.55
+GAME_BASE = 93000
 
 COUNTRY_FACTOR = {
-    "us": 1.0, "jp": 0.35, "gb": 0.18, "de": 0.15,
-    "kr": 0.12, "sa": 0.05, "au": 0.08, "ca": 0.10,
-    "fr": 0.12, "br": 0.07, "tr": 0.04, "id": 0.06,
+    "us": 1.00, "jp": 0.25, "gb": 0.10, "de": 0.08,
+    "kr": 0.06, "fr": 0.05, "ca": 0.04, "au": 0.04,
+    "br": 0.03, "sa": 0.02, "tr": 0.02, "id": 0.02,
 }
 
 CATEGORY_FACTOR = {
-    "6004": 0.15, "6005": 0.12, "6012": 0.10, "6008": 0.08, "6015": 0.08,
-    "6000": 0.04, "6003": 0.04, "6006": 0.05, "6007": 0.03, "6016": 0.03,
-    "6017": 0.03, "6018": 0.03, "6011": 0.04, "6002": 0.03, "6020": 0.02,
-    "6021": 0.02, "6013": 0.03, "6001": 0.015, "6009": 0.01, "6010": 0.015,
-    "6014": 0.01, "6023": 0.01,
+    "6004": 0.40, "6005": 0.35, "6012": 0.30, "6008": 0.28, "6015": 0.25,
+    "6000": 0.20, "6003": 0.18, "6006": 0.18, "6011": 0.17, "6002": 0.15,
+    "6013": 0.15, "6017": 0.14, "6018": 0.14, "6016": 0.13, "6007": 0.11,
+    "6020": 0.09, "6021": 0.09, "6001": 0.08, "6009": 0.07, "6010": 0.07,
+    "6014": 0.06, "6023": 0.06,
 }
 
 
-def estimate_downloads(rank, country="us", category_id=None):
+def estimate_downloads(rank, country="us", category_id=None, is_game=False):
     if rank is None or rank <= 0:
         return 0
-    country_factor = COUNTRY_FACTOR.get(country, 0.05)
+    cf = COUNTRY_FACTOR.get(country, 0.03)
     if category_id and category_id != "overall":
-        cat_factor = CATEGORY_FACTOR.get(category_id, 0.03)
-        base = OVERALL_BASE * cat_factor
+        cat_f = CATEGORY_FACTOR.get(category_id, 0.10)
+        b = GAME_POWER_ALPHA if is_game else POWER_ALPHA
+        base = (GAME_BASE if is_game else OVERALL_BASE) * cat_f
     else:
-        base = OVERALL_BASE
-    daily = base * math.pow(rank, -POWER_ALPHA) * country_factor
+        b = GAME_POWER_ALPHA if is_game else POWER_ALPHA
+        base = GAME_BASE if is_game else OVERALL_BASE
+    daily = base * math.pow(rank, -b) * cf
     return int(max(1, daily * 30))
 
 

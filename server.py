@@ -66,69 +66,95 @@ def get_db():
 
 
 # ==================== 下载量预估模型（仅 iPhone） ====================
-# 学术参考: d_iPhone = 52,958 × rank^(-0.944) (Carlsen & Ghezzi 2014)
-# Sensor Tower 参考 (2022 美国市场日下载量 iPhone):
-#   总榜#1 ≈ 156,000  Top10均值 ≈ 52,000  Games#1 ≈ 93,000
-#   总榜#50 ≈ 4,000  总榜#100 ≈ 2,000  总榜#200 ≈ 1,000
-# 校准公式: daily_us = 156000 × rank^(-0.94) × country_factor × cat_factor
-# 核心约束: 分类榜同排名的下载量必须 < 总榜同排名（分类因子 < 1）
+# 核心公式: daily = BASE × rank^(-b) × country_factor × cat_factor
+#
+# 锚点数据 (Sensor Tower 2022 美国市场 iPhone 日下载量):
+#   非游戏总榜 #1  ≈ 156,000    非游戏 Top10 ≈ 52,000
+#   游戏总榜 #1   ≈ 93,000 (中位数，比2019降46%)
+#   中国非游戏 Top10 ≈ 108,000 (是美国的2倍+)
+#   总榜 #50 ≈ 4,000   #100 ≈ 2,000   #200 ≈ 1,000  ← 这些是旧估计，偏低
+#
+# 幂律指数推导 (b):
+#   156,000 × 10^(-b) = 52,000  →  b = ln(156000/52000) / ln(10) ≈ 0.477
+#   取 b ≈ 0.48 (非游戏) / b ≈ 0.55 (游戏，头部更集中)
+#
+# 对比: 旧模型用 b=0.94 (Carlsen & Ghezzi 2014 学术论文)
+#   该论文的 b=0.944 是基于 2013 年数据，当时 App Store 生态完全不同
+#   且论文用的是"总下载量"，包含了历史积累，不是"瞬时排名→日下载"
+#   Sensor Tower 2022 实测数据指向更平坦的曲线 (b≈0.48)
 
-OVERALL_BASE = 156000  # 美国总榜#1日下载量 (Sensor Tower 校准)
-POWER_ALPHA = 0.94      # power law 指数 (学术研究: -0.944)
+OVERALL_BASE = 156000        # 美国非游戏总榜#1日下载量 (Sensor Tower 2022)
+POWER_ALPHA = 0.48           # power law 衰减指数 (基于2022实测: 156k→52k@#10)
+GAME_POWER_ALPHA = 0.55      # 游戏榜头部集中度更高
+GAME_BASE = 93000            # 美国游戏总榜#1日下载量中位数
 
+# 国家因子: 基于 App Store 各市场相对规模 (下载量+收入综合)
+# 同一排名在不同国家的绝对下载量差异巨大
 COUNTRY_FACTOR = {
-    "us": 1.0, "jp": 0.35, "gb": 0.18, "de": 0.15,
-    "kr": 0.12, "sa": 0.05, "au": 0.08, "ca": 0.10,
-    "fr": 0.12, "br": 0.07, "tr": 0.04, "id": 0.06,
+    "us": 1.00, "jp": 0.25, "gb": 0.10, "de": 0.08,
+    "kr": 0.06, "fr": 0.05, "ca": 0.04, "au": 0.04,
+    "br": 0.03, "sa": 0.02, "tr": 0.02, "id": 0.02,
 }
 
-# 分类渗透因子: 分类#1日下载量 = 总榜#1 × 因子
-# 确保分类榜任何排名的预估下载量 < 总榜同排名下载量
-# Tier1 的 #1 约等于总榜 top5-15 的下载水平
-# Tier3 的 #1 约等于总榜 top80-200 的下载水平
+# 分类渗透因子: 分类#1的日下载量 ≈ 总榜#K的日下载量，K = cat_factor 反推的排名
+# 即 cat_factor = K^(-b)，表示该分类头部相当于总榜多深的渗透
+# Tier 1 (头部品类): 社交/娱乐/摄影/音乐/购物  → #1 ≈ 总榜#6-16
+# Tier 2 (中型品类): 商业/教育/财务/新闻/工具/效率/体育/旅行/生活  → #1 ≈ 总榜#25-65
+# Tier 3 (小型品类): 健康/图书/美食/天气/医疗/导航/参考/杂志  → #1 ≈ 总榜#100-280
 CATEGORY_FACTOR = {
-    "6004": 0.15,  # 社交 - #1 ≈ 总榜#8
-    "6005": 0.12,  # 娱乐 - #1 ≈ 总榜#10
-    "6012": 0.10,  # 摄影与录像
-    "6008": 0.08,  # 音乐
-    "6015": 0.08,  # 购物
-    "6000": 0.04,  # 商业
-    "6003": 0.04,  # 教育
-    "6006": 0.05,  # 财务
-    "6007": 0.03,  # 健康健美
-    "6016": 0.03,  # 生活方式
-    "6017": 0.03,  # 体育
-    "6018": 0.03,  # 旅行
-    "6011": 0.04,  # 新闻
-    "6002": 0.03,  # 工具
-    "6020": 0.02,  # 图书
-    "6021": 0.02,  # 美食佳饮
-    "6013": 0.03,  # 效率
-    "6001": 0.015,  # 天气
-    "6009": 0.01,  # 医疗
-    "6010": 0.015,  # 导航
-    "6014": 0.01,  # 参考
-    "6023": 0.01,  # 杂志报纸
+    "6004": 0.40,  # 社交 - 头部品类, cat#1 ≈ 总榜#6
+    "6005": 0.35,  # 娱乐
+    "6012": 0.30,  # 摄影与录像
+    "6008": 0.28,  # 音乐
+    "6015": 0.25,  # 购物
+    "6000": 0.20,  # 商业 - 中型品类
+    "6003": 0.18,  # 教育
+    "6006": 0.18,  # 财务
+    "6011": 0.17,  # 新闻
+    "6002": 0.15,  # 工具
+    "6013": 0.15,  # 效率
+    "6017": 0.14,  # 体育
+    "6018": 0.14,  # 旅行
+    "6016": 0.13,  # 生活方式
+    "6007": 0.11,  # 健康健美 - 小型品类
+    "6020": 0.09,  # 图书
+    "6021": 0.09,  # 美食佳饮
+    "6001": 0.08,  # 天气
+    "6009": 0.07,  # 医疗
+    "6010": 0.07,  # 导航
+    "6014": 0.06,  # 参考
+    "6023": 0.06,  # 杂志报纸
 }
 
 
-def estimate_downloads(rank, country="us", category_id=None):
+def estimate_downloads(rank, country="us", category_id=None, is_game=False):
     """
-    估算月下载量（仅 iPhone）。
-    总榜模型: monthly = OVERALL_BASE × rank^(-0.94) × country_factor × 30
-    分类模型: monthly = OVERALL_BASE × cat_factor × rank^(-0.94) × country_factor × 30
-    重要: 分类排名必须传入 category_id，否则分类排名会被当作总榜排名导致严重高估。
+    估算月下载量（仅 iPhone），基于幂律曲线 power law。
+
+    锚点: Sensor Tower 2022 美国实测
+      - 非游戏#1 ≈ 156,000/天, #10 ≈ 52,000/天 → b ≈ 0.48
+      - 游戏#1 ≈ 93,000/天, b ≈ 0.55 (头部更集中)
+
+    总榜:   monthly = OVERALL_BASE × rank^(-0.48) × country × 30
+    分类榜: monthly = OVERALL_BASE × cat_factor × rank^(-0.48) × country × 30
+
+    重要: 分类排名必须传入 category_id，否则会当作总榜排名导致严重高估。
     """
     if not rank or rank <= 0:
         return 0
     import math
-    country_factor = COUNTRY_FACTOR.get(country, 0.05)
+    cf = COUNTRY_FACTOR.get(country, 0.03)
+
     if category_id and category_id != "overall":
-        cat_factor = CATEGORY_FACTOR.get(category_id, 0.03)
-        base = OVERALL_BASE * cat_factor
+        cat_f = CATEGORY_FACTOR.get(category_id, 0.10)
+        # 游戏分类使用专用参数
+        b = GAME_POWER_ALPHA if is_game else POWER_ALPHA
+        base = (GAME_BASE if is_game else OVERALL_BASE) * cat_f
     else:
-        base = OVERALL_BASE
-    daily = base * math.pow(rank, -POWER_ALPHA) * country_factor
+        b = GAME_POWER_ALPHA if is_game else POWER_ALPHA
+        base = GAME_BASE if is_game else OVERALL_BASE
+
+    daily = base * math.pow(rank, -b) * cf
     return int(max(1, daily * 30))
 
 
