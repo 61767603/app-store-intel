@@ -1,0 +1,67 @@
+@import "tailwindcss";
+
+@theme {
+  --color-base-900: #0b1220;
+  --color-base-800: #0f172a;
+  --color-base-700: #1e293b;
+  --color-base-600: #334155;
+  --color-accent: #6366f1;
+  --color-accent-glow: #818cf8;
+  --color-ok: #22c55e;
+  --color-warn: #eab308;
+  --color-danger: #ef4444;
+  --font-sans: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+  --font-mono: JetBrains Mono, Menlo, Consolas, monospace;
+  --shadow-card: 0 0 0 1px rgba(99,102,241,0.06), 0 8px 24px -8px rgba(0,0,0,0.6);
+  --shadow-glow: 0 0 20px -4px rgba(99,102,241,0.35);
+  --animate-pulse-dot: pulse-dot 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
+@layer components {
+  .card {
+    @apply bg-base-800/80 backdrop-blur rounded-xl shadow-card border border-slate-700/40;
+  }
+  .card-title {
+    @apply text-sm font-medium text-slate-400 tracking-wide;
+  }
+  .stat-value {
+    @apply text-3xl font-semibold text-slate-100 font-mono tabular-nums;
+  }
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  font-family: Inter, system-ui, -apple-system, Segoe UI, sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
