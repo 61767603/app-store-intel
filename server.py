@@ -283,7 +283,7 @@ def api_overall_top(params):
 
     rows = c.execute("""
         SELECT ct.rank, ct.app_id, d.app_name, d.developer_name,
-               d.rating_count, d.rating_avg, d.price, d.genre, d.icon_url
+               d.rating_count, d.rating_avg, d.price, d.genre, d.icon_url, ct.country
         FROM app_chart_type ct
         LEFT JOIN app_details d ON ct.app_id = d.app_id
         WHERE ct.category_id = 'overall'
@@ -304,6 +304,7 @@ def api_overall_top(params):
             "est_downloads": dl,
             "est_revenue_low": round(dl * 0.03) if dl else 0,
             "est_revenue_high": round(dl * 0.10) if dl else 0,
+            "country": r["country"],
         })
     conn.close()
     return result
@@ -321,19 +322,24 @@ def api_quiet_gems(params):
     rows = c.execute("""
         SELECT r.country, r.category_id, r.category_name, r.app_name, r.developer_name,
                r.rank_category, d.rating_count, d.rating_avg, d.price, d.genre,
-               d.bundle_id, ct.rank as overall_rank, r.app_id, d.icon_url,
+               d.bundle_id,
+               COALESCE(ct.rank, ctf.rank) as overall_rank,
+               r.app_id, d.icon_url,
                d.release_date
         FROM app_daily_rank r
         LEFT JOIN app_details d ON r.app_id = d.app_id
         LEFT JOIN app_chart_type ct ON r.app_id = ct.app_id
             AND r.country = ct.country AND ct.category_id = 'overall'
             AND ct.chart_type = 'overall_topgrossing' AND ct.date = ?
+        LEFT JOIN app_chart_type ctf ON r.app_id = ctf.app_id
+            AND r.country = ctf.country AND ctf.category_id = 'overall'
+            AND ctf.chart_type = 'overall_topfree' AND ctf.date = ?
         WHERE r.date = ? AND r.country = ? AND r.category_id != 'overall'
           AND r.rank_category <= 50
           AND (d.rating_count < 5000 OR d.rating_count IS NULL)
         ORDER BY r.rank_category ASC, d.rating_count ASC
         LIMIT ? OFFSET ?
-    """, (today, today, country, per_page, offset)).fetchall()
+    """, (today, today, today, country, per_page, offset)).fetchall()
 
     total = c.execute("""
         SELECT COUNT(*) FROM app_daily_rank r
@@ -382,19 +388,23 @@ def api_indie_gems(params):
     rows = c.execute(f"""
         SELECT r.country, r.category_id, r.category_name, r.app_name, r.developer_name,
                r.rank_category, d.rating_count, d.rating_avg, d.price, d.genre,
-               d.bundle_id, ct.rank as overall_rank, r.app_id, d.icon_url,
-               d.release_date
+               d.bundle_id,
+               COALESCE(ct.rank, ctf.rank) as overall_rank,
+               r.app_id, d.icon_url, d.release_date
         FROM app_daily_rank r
         LEFT JOIN app_details d ON r.app_id = d.app_id
         LEFT JOIN app_chart_type ct ON r.app_id = ct.app_id
             AND r.country = ct.country AND ct.category_id = 'overall'
             AND ct.chart_type = 'overall_topgrossing' AND ct.date = ?
+        LEFT JOIN app_chart_type ctf ON r.app_id = ctf.app_id
+            AND r.country = ctf.country AND ctf.category_id = 'overall'
+            AND ctf.chart_type = 'overall_topfree' AND ctf.date = ?
         WHERE r.date = ? AND r.country = ? AND r.category_id != 'overall'
           AND r.rank_category <= 30
           AND ({where_parts} OR d.developer_name IS NULL)
         ORDER BY r.rank_category ASC
         LIMIT ? OFFSET ?
-    """, (today, today, country, *[f"%{p}%" for p in KNOWN_PUBLISHERS], per_page, offset)).fetchall()
+    """, (today, today, today, country, *[f"%{p}%" for p in KNOWN_PUBLISHERS], per_page, offset)).fetchall()
 
     total = c.execute(f"""
         SELECT COUNT(*) FROM app_daily_rank r
@@ -456,13 +466,18 @@ def api_low_rating(params):
     rows = c.execute(f"""
         SELECT r.country, r.category_id, r.category_name, r.app_name, r.developer_name,
                r.rank_category, d.rating_count, d.rating_avg, d.price, d.genre,
-               r.app_id, ct.rank as overall_rank, d.icon_url,
+               r.app_id,
+               COALESCE(ct.rank, ctf.rank) as overall_rank,
+               d.icon_url,
                d.release_date, d.current_version_rating, d.current_version_count
         FROM app_daily_rank r
         LEFT JOIN app_details d ON r.app_id = d.app_id
         LEFT JOIN app_chart_type ct ON r.app_id = ct.app_id
             AND r.country = ct.country AND ct.category_id = 'overall'
             AND ct.chart_type = 'overall_topgrossing' AND ct.date = ?
+        LEFT JOIN app_chart_type ctf ON r.app_id = ctf.app_id
+            AND r.country = ctf.country AND ctf.category_id = 'overall'
+            AND ctf.chart_type = 'overall_topfree' AND ctf.date = ?
         WHERE r.date = ? AND r.country = ? AND r.category_id != 'overall'
           AND r.rank_category <= 200
           AND d.rating_avg IS NOT NULL AND d.rating_avg > 0 AND d.rating_avg < 4.0
@@ -470,7 +485,7 @@ def api_low_rating(params):
           {cat_filter}
         ORDER BY r.rank_category ASC
         LIMIT ? OFFSET ?
-    """, (today, today, country, *cat_params, per_page, offset)).fetchall()
+    """, (today, today, today, country, *cat_params, per_page, offset)).fetchall()
 
     total = c.execute(f"""
         SELECT COUNT(*) FROM app_daily_rank r
@@ -533,16 +548,19 @@ def api_category_top(params):
     rows = c.execute("""
         SELECT r.rank_category, r.app_id, r.app_name, r.developer_name,
                d.rating_count, d.rating_avg, d.price, d.genre, d.icon_url,
-               ct.rank as overall_rank
+               COALESCE(ct.rank, ctf.rank) as overall_rank
         FROM app_daily_rank r
         LEFT JOIN app_details d ON r.app_id = d.app_id
         LEFT JOIN app_chart_type ct ON r.app_id = ct.app_id
             AND r.country = ct.country AND ct.category_id = 'overall'
             AND ct.chart_type = 'overall_topgrossing' AND ct.date = ?
+        LEFT JOIN app_chart_type ctf ON r.app_id = ctf.app_id
+            AND r.country = ctf.country AND ctf.category_id = 'overall'
+            AND ctf.chart_type = 'overall_topfree' AND ctf.date = ?
         WHERE r.date = ? AND r.country = ? AND r.category_id = ?
         ORDER BY r.rank_category ASC
         LIMIT 20
-    """, (today, today, country, category_id)).fetchall()
+    """, (today, today, today, country, category_id)).fetchall()
 
     result = []
     for r in rows:

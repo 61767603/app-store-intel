@@ -39,7 +39,7 @@ function arrow(k: string) { return sortState.key !== k ? '' : sortState.dir === 
             <td class="px-3 py-3"><RankBadge :rank="row.rank_category" type="category" /></td>
             <td class="px-3 py-3"><RankBadge :rank="row.overall_rank" type="overall" /></td>
             <td class="px-3 py-3 text-slate-500 text-xs">{{ row.category_name }}</td>
-            <td class="px-3 py-3 min-w-[180px]"><AppIcon :icon-url="row.icon_url" :app-name="row.app_name" :app-id="row.app_id" /></td>
+            <td class="px-3 py-3 min-w-[180px]"><AppIcon :icon-url="row.icon_url" :app-name="row.app_name" :app-id="row.app_id" :country="row.country" /></td>
             <td class="px-3 py-3 text-slate-500 max-w-[130px] truncate text-xs">{{ row.developer_name || '-' }}</td>
             <td class="px-3 py-3 text-right text-slate-400 font-mono tabular-nums tracking-tight pr-4">{{ formatCount(row.rating_count) }}</td>
             <td class="px-3 py-3 pl-4"><RatingStars :rating="row.rating_avg" /></td>

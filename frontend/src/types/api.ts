@@ -23,6 +23,7 @@ export interface OverallApp {
   est_downloads: number
   est_revenue_low: number
   est_revenue_high: number
+  country?: string
   price_sort?: number
 }
 
