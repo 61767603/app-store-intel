@@ -68,23 +68,12 @@ def get_db():
 # ==================== 下载量预估模型（仅 iPhone） ====================
 # 核心公式: daily = BASE × rank^(-b) × country_factor × cat_factor
 #
-# 锚点数据 (Sensor Tower 2022 美国市场 iPhone 日下载量):
-#   非游戏总榜 #1  ≈ 156,000    非游戏 Top10 ≈ 52,000
-#   游戏总榜 #1   ≈ 93,000 (中位数，比2019降46%)
-#   中国非游戏 Top10 ≈ 108,000 (是美国的2倍+)
-#   总榜 #50 ≈ 4,000   #100 ≈ 2,000   #200 ≈ 1,000  ← 这些是旧估计，偏低
-#
-# 幂律指数推导 (b):
-#   156,000 × 10^(-b) = 52,000  →  b = ln(156000/52000) / ln(10) ≈ 0.477
-#   取 b ≈ 0.48 (非游戏) / b ≈ 0.55 (游戏，头部更集中)
-#
-# 对比: 旧模型用 b=0.94 (Carlsen & Ghezzi 2014 学术论文)
-#   该论文的 b=0.944 是基于 2013 年数据，当时 App Store 生态完全不同
-#   且论文用的是"总下载量"，包含了历史积累，不是"瞬时排名→日下载"
-#   Sensor Tower 2022 实测数据指向更平坦的曲线 (b≈0.48)
+# 七麦数据校准 (2026-07-05):
+#   总榜#1 ChatGPT ≈ 174,882/天, #5 ≈ 190,150, #10 ≈ 25,016
+#   拟合: a=366,878  b=1.1681  R²=0.777
 
-OVERALL_BASE = 156000        # 美国非游戏总榜#1日下载量 (Sensor Tower 2022)
-POWER_ALPHA = 0.48           # power law 衰减指数 (基于2022实测: 156k→52k@#10)
+OVERALL_BASE = 366878        # 美国非游戏总榜#1日下载量 (七麦校准 2026-07-05)
+POWER_ALPHA = 1.1681         # power law 衰减指数 (七麦校准 2026-07-05)
 GAME_POWER_ALPHA = 0.55      # 游戏榜头部集中度更高
 GAME_BASE = 93000            # 美国游戏总榜#1日下载量中位数
 
@@ -131,12 +120,12 @@ def estimate_downloads(rank, country="us", category_id=None, is_game=False):
     """
     估算月下载量（仅 iPhone），基于幂律曲线 power law。
 
-    锚点: Sensor Tower 2022 美国实测
-      - 非游戏#1 ≈ 156,000/天, #10 ≈ 52,000/天 → b ≈ 0.48
+    锚点: 七麦 2026-07-05 校准
+      - 非游戏#1 ≈ 174,882/天, b ≈ 1.1681
       - 游戏#1 ≈ 93,000/天, b ≈ 0.55 (头部更集中)
 
-    总榜:   monthly = OVERALL_BASE × rank^(-0.48) × country × 30
-    分类榜: monthly = OVERALL_BASE × cat_factor × rank^(-0.48) × country × 30
+    总榜:   monthly = OVERALL_BASE × rank^(-b) × country × 30
+    分类榜: monthly = OVERALL_BASE × cat_factor × rank^(-b) × country × 30
 
     重要: 分类排名必须传入 category_id，否则会当作总榜排名导致严重高估。
     """
