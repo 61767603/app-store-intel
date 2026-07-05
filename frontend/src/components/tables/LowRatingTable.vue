@@ -21,9 +21,8 @@ function arrow(k: string) { return sortState.key !== k ? '' : sortState.dir === 
       <table class="w-full text-xs border-collapse">
         <thead class="sticky top-0 z-10">
           <tr class="border-b border-slate-700/30 bg-slate-800/30">
-            <th @click="toggleSort('rank_category','num')" class="px-3 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">分类# {{ arrow('rank_category') }}</th>
+            <th @click="toggleSort('rank_category','num')" class="px-3 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">排名 {{ arrow('rank_category') }}</th>
             <th @click="toggleSort('overall_rank','num')" class="px-3 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">总榜 {{ arrow('overall_rank') }}</th>
-            <th @click="toggleSort('category_name','str')" class="px-3 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">分类 {{ arrow('category_name') }}</th>
             <th @click="toggleSort('app_name','str')" class="px-3 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">应用 {{ arrow('app_name') }}</th>
             <th @click="toggleSort('developer_name','str')" class="px-3 py-2.5 text-[11px] text-left text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300">开发者 {{ arrow('developer_name') }}</th>
             <th @click="toggleSort('rating_count','num')" class="px-3 py-2.5 text-[11px] text-right text-slate-500 font-medium uppercase tracking-wider cursor-pointer select-none hover:text-slate-300 pr-4">评分数 {{ arrow('rating_count') }}</th>
@@ -36,9 +35,13 @@ function arrow(k: string) { return sortState.key !== k ? '' : sortState.dir === 
         </thead>
         <tbody class="divide-y divide-slate-800/30">
           <tr v-for="row in sorted" :key="row.app_id + '-' + row.category_id" class="hover:bg-slate-800/40 transition-colors bg-danger/[0.03]">
-            <td class="px-3 py-3"><RankBadge :rank="row.rank_category" type="category" /></td>
+            <td class="px-3 py-2.5">
+              <div class="flex flex-col items-start gap-0.5 min-w-[60px]">
+                <span class="text-[10px] text-slate-500 leading-none">{{ row.category_name }}</span>
+                <span class="text-lg font-bold font-mono text-slate-100 leading-none tabular-nums">#{{ row.rank_category }}</span>
+              </div>
+            </td>
             <td class="px-3 py-3"><RankBadge :rank="row.overall_rank" type="overall" /></td>
-            <td class="px-3 py-3 text-slate-500 text-xs">{{ row.category_name }}</td>
             <td class="px-3 py-3 min-w-[180px]"><AppIcon :icon-url="row.icon_url" :app-name="row.app_name" :app-id="row.app_id" :country="row.country" /></td>
             <td class="px-3 py-3 text-slate-500 max-w-[130px] truncate text-xs">{{ row.developer_name || '-' }}</td>
             <td class="px-3 py-3 text-right text-slate-400 font-mono tabular-nums tracking-tight pr-4">{{ formatCount(row.rating_count) }}</td>
