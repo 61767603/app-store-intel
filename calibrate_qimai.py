@@ -19,9 +19,13 @@ import math
 import re
 import time
 import json
+import io
 import argparse
 from datetime import date
 from playwright.sync_api import sync_playwright, TimeoutError
+
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 # ==================== 15 个校准锚点 ====================
 # 覆盖总榜各档 + 三个分类各三档
@@ -93,8 +97,8 @@ def fetch_all_downloads(benchmarks):
                     results.append((label, app_id, dl))
                 else:
                     print("未提取到")
-                    page.screenshot(path="/tmp/qimai_debug.png")
-                    print("     (截图保存 /tmp/qimai_debug.png)")
+                    page.screenshot(path="qimai_debug.png")
+                    print("     (截图保存 qimai_debug.png)")
             except TimeoutError:
                 print("超时")
             except Exception as e:
@@ -137,13 +141,13 @@ def fit_power_law(ranks, downloads):
 
 def apply_constants(file_path, base, alpha):
     """更新 server.py 中 OVERALL_BASE 和 POWER_ALPHA"""
-    with open(file_path, "r") as f:
+    with open(file_path, "r", encoding="utf-8") as f:
         content = f.read()
     content = re.sub(r"OVERALL_BASE = \d+", f"OVERALL_BASE = {base}", content)
     content = re.sub(
         r"POWER_ALPHA = [\d.]+", f"POWER_ALPHA = {alpha}", content
     )
-    with open(file_path, "w") as f:
+    with open(file_path, "w", encoding="utf-8") as f:
         f.write(content)
     print(f"✅ 已更新 {file_path}")
 
