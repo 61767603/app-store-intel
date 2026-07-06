@@ -5,6 +5,7 @@ __pycache__/
 
 # Database
 app_intel.db
+gp_intel.db
 
 # Node
 frontend/node_modules/
