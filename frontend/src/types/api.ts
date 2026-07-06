@@ -106,3 +106,17 @@ export interface CategoryTopApp {
   est_revenue_high: number
   price_sort?: number
 }
+
+export interface GpNewApp {
+  app_id: string
+  first_seen_date: string
+  title: string
+  developer: string
+  genre: string
+  score: number | null
+  installs: string
+  price: number
+  free: boolean
+  icon_url: string
+  url: string
+}

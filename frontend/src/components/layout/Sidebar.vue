@@ -1,10 +1,13 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useCountryStore } from '../../stores/country'
+import { usePlatformStore } from '../../stores/platform'
 
 const router = useRouter()
 const route = useRoute()
 const countryStore = useCountryStore()
+const platformStore = usePlatformStore()
 
 const LABELS: Record<string, string> = {
   us: '🇺🇸 美国', jp: '🇯🇵 日本', gb: '🇬🇧 英国', de: '🇩🇪 德国',
@@ -12,9 +15,14 @@ const LABELS: Record<string, string> = {
   fr: '🇫🇷 法国', br: '🇧🇷 巴西', tr: '🇹🇷 土耳其', id: '🇮🇩 印尼',
 }
 
-function label(c: string) { return LABELS[c] || c.toUpperCase() }
+const iosCountries = ['us', 'jp', 'de', 'gb', 'kr', 'sa', 'au', 'ca', 'fr', 'br', 'tr', 'id']
+const androidCountries = ['us', 'jp', 'de', 'br', 'id']
 
-const navItems = [
+const availableCountries = computed(() =>
+  platformStore.platform === 'ios' ? iosCountries : androidCountries
+)
+
+const iosNavItems = [
   { path: '/overview', label: '📊  总览' },
   { path: '/overall-top', label: '🏆  畅销总榜' },
   { path: '/quiet-gems', label: '🤫  闷声型' },
@@ -23,19 +31,51 @@ const navItems = [
   { path: '/categories', label: '📂  品类排行' },
 ]
 
+const androidNavItems = [
+  { path: '/gp/new-apps', label: '🆕  新发现' },
+  { path: '/gp/top-free', label: '📈  免费榜' },
+]
+
+const navItems = computed(() =>
+  platformStore.platform === 'ios' ? iosNavItems : androidNavItems
+)
+
 function isActive(path: string) { return route.path === path }
 function navigate(path: string) { router.push(path) }
+function switchTo(p: 'ios' | 'android') {
+  platformStore.setPlatform(p)
+  if (p === 'android' && !androidCountries.includes(countryStore.country)) {
+    countryStore.setCountry('us')
+  }
+  router.push(p === 'ios' ? '/overview' : '/gp/new-apps')
+}
 </script>
 
 <template>
   <aside class="w-60 shrink-0 bg-base-800/60 backdrop-blur border-r border-slate-700/40 flex flex-col min-h-screen">
     <div class="px-5 py-5">
       <div class="flex items-center gap-3">
-        <span class="text-2xl">📱</span>
+        <span class="text-2xl">{{ platformStore.platform === 'ios' ? '📱' : '🤖' }}</span>
         <div>
           <div class="font-bold text-lg text-slate-100 leading-tight">App Intel</div>
           <div class="text-xs text-slate-500">app.apisyncs.com</div>
         </div>
+      </div>
+    </div>
+
+    <!-- Platform Toggle -->
+    <div class="px-3 mb-2">
+      <div class="flex rounded-lg bg-slate-800/60 p-0.5">
+        <button
+          @click="switchTo('ios')"
+          class="flex-1 py-1.5 text-sm rounded-md transition-colors font-medium"
+          :class="platformStore.platform === 'ios' ? 'bg-accent text-white shadow' : 'text-slate-400 hover:text-slate-200'"
+        >📱 iOS</button>
+        <button
+          @click="switchTo('android')"
+          class="flex-1 py-1.5 text-sm rounded-md transition-colors font-medium"
+          :class="platformStore.platform === 'android' ? 'bg-accent text-white shadow' : 'text-slate-400 hover:text-slate-200'"
+        >🤖 安卓</button>
       </div>
     </div>
 
@@ -60,12 +100,12 @@ function navigate(path: string) { router.push(path) }
         @change="countryStore.setCountry(($event.target as HTMLSelectElement).value)"
         class="w-full bg-base-900/60 border border-slate-700/40 rounded-lg px-4 py-2.5 text-sm text-slate-200 outline-none focus:border-accent/40 cursor-pointer appearance-none"
       >
-        <option v-for="c in countryStore.availableCountries" :key="c" :value="c">{{ label(c) }}</option>
+        <option v-for="c in availableCountries" :key="c" :value="c">{{ LABELS[c] || c.toUpperCase() }}</option>
       </select>
     </div>
 
     <div class="px-5 py-3 text-xs text-slate-600 border-t border-slate-800/60">
-      v1.0 · MVVM
+      v1.0 · iOS+GP
     </div>
   </aside>
 </template>

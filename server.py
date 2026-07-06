@@ -23,6 +23,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="repla
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app_intel.db")
+GP_DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "gp_intel.db")
 STATIC_DIR = os.path.dirname(os.path.abspath(__file__))
 
 CATEGORIES = {
@@ -570,6 +571,91 @@ def api_category_top(params):
     return result
 
 
+# ==================== Google Play API ====================
+
+def api_gp_new_apps(params):
+    country = params.get("country", "us")
+    page = int(params.get("page", 1))
+    per_page = int(params.get("per_page", 50))
+    offset = (page - 1) * per_page
+    conn = sqlite3.connect(GP_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+
+    total = c.execute(
+        "SELECT COUNT(*) FROM gp_seen_apps WHERE country = ?",
+        (country,)
+    ).fetchone()[0]
+
+    rows = c.execute("""
+        SELECT s.app_id, s.first_seen_date, d.title, d.developer,
+               d.genre, d.score, d.installs, d.price, d.free,
+               d.icon_url, d.url
+        FROM gp_seen_apps s
+        LEFT JOIN gp_app_details d ON s.app_id = d.app_id
+        WHERE s.country = ?
+        ORDER BY s.first_seen_date DESC, s.app_id ASC
+        LIMIT ? OFFSET ?
+    """, (country, per_page, offset)).fetchall()
+
+    data = [{
+        "app_id": r["app_id"], "first_seen_date": r["first_seen_date"],
+        "title": r["title"] or r["app_id"],
+        "developer": r["developer"] or "",
+        "genre": r["genre"] or "",
+        "score": r["score"],
+        "installs": r["installs"] or "",
+        "price": r["price"],
+        "free": bool(r["free"]),
+        "icon_url": r["icon_url"] or "",
+        "url": r["url"] or f"https://play.google.com/store/apps/details?id={r['app_id']}",
+    } for r in rows]
+
+    conn.close()
+    return {"total": total, "page": page, "per_page": per_page, "data": data}
+
+
+def api_gp_top_free(params):
+    country = params.get("country", "us")
+    conn = sqlite3.connect(GP_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    c = conn.cursor()
+    today = date.today().isoformat()
+
+    latest_date = c.execute(
+        "SELECT MAX(date) FROM gp_daily_index WHERE country = ?",
+        (country,)
+    ).fetchone()[0] or today
+
+    rows = c.execute("""
+        SELECT d.app_id, d.title, d.rank, c.category_id,
+               det.developer, det.genre, det.score, det.installs,
+               det.price, det.free, det.icon_url
+        FROM gp_daily_index d
+        LEFT JOIN gp_app_details det ON d.app_id = det.app_id
+        LEFT JOIN (SELECT DISTINCT app_id, category_id FROM gp_daily_index
+                    WHERE date = ? AND country = ?) c ON d.app_id = c.app_id
+        WHERE d.date = ? AND d.country = ? AND d.collection = 'TOP_FREE'
+        ORDER BY d.rank ASC LIMIT 100
+    """, (latest_date, country, latest_date, country)).fetchall()
+
+    data = [{
+        "rank": r["rank"], "app_id": r["app_id"],
+        "title": r["title"] or r["app_id"],
+        "category_id": r["category_id"] or "",
+        "developer": r["developer"] or "",
+        "genre": r["genre"] or "",
+        "score": r["score"],
+        "installs": r["installs"] or "",
+        "price": r["price"],
+        "free": bool(r["free"]),
+        "icon_url": r["icon_url"] or "",
+    } for r in rows]
+
+    conn.close()
+    return data
+
+
 API_ROUTES = {
     "/api/overview": api_overview,
     "/api/overall_top": api_overall_top,
@@ -578,6 +664,9 @@ API_ROUTES = {
     "/api/low_rating": api_low_rating,
     "/api/categories": api_categories,
     "/api/category_top": api_category_top,
+    # Google Play API
+    "/api/gp/new_apps": api_gp_new_apps,
+    "/api/gp/top_free": api_gp_top_free,
 }
 
 
