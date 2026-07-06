@@ -442,7 +442,27 @@ def scrape_all(countries=None, categories=None):
 
     saved_details = save_details_to_db(details_list)
     print(f"\n✅ 详情补全完成，保存 {saved_details} 条")
+
+    # 清理非当日的旧排名数据
+    cleanup_old_ranks(today, countries)
     return len(all_app_ids)
+
+
+def cleanup_old_ranks(today, countries):
+    """删除非当日的 app_daily_rank、app_chart_type、discovered_gems 记录"""
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    for table in ["app_daily_rank", "app_chart_type", "discovered_gems"]:
+        for country in countries:
+            deleted = c.execute(
+                f"DELETE FROM {table} WHERE date != ? AND country = ?",
+                (today, country)
+            ).rowcount
+            if deleted:
+                print(f"  🧹 清理 {table} {country}: 删除 {deleted} 条旧数据")
+    conn.commit()
+    conn.close()
+    print()
 
 
 def discover_gems():
