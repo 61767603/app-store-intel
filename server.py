@@ -17,7 +17,7 @@ import sys
 import io
 import urllib.parse
 import argparse
-from datetime import date
+from datetime import date, timedelta
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
@@ -582,23 +582,22 @@ def api_gp_new_apps(params):
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
 
-    # 最近 30 天上架
-    from datetime import timedelta
+    # 过滤最近 30 天内上架
     cutoff = (date.today() - timedelta(days=30)).isoformat()
 
     total = c.execute(
-        "SELECT COUNT(*) FROM gp_seen_apps WHERE country = ? AND first_seen_date >= ?",
+        "SELECT COUNT(*) FROM gp_seen_apps s LEFT JOIN gp_app_details d ON s.app_id = d.app_id WHERE s.country = ? AND d.released >= ?",
         (country, cutoff)
     ).fetchone()[0]
 
     rows = c.execute("""
         SELECT s.app_id, s.first_seen_date, d.title, d.developer,
                d.genre, d.score, d.installs, d.price, d.free,
-               d.icon_url, d.url
+               d.icon_url, d.url, d.released
         FROM gp_seen_apps s
         LEFT JOIN gp_app_details d ON s.app_id = d.app_id
-        WHERE s.country = ? AND s.first_seen_date >= ?
-        ORDER BY s.first_seen_date DESC, s.app_id ASC
+        WHERE s.country = ? AND d.released >= ?
+        ORDER BY d.released DESC, s.app_id ASC
         LIMIT ? OFFSET ?
     """, (country, cutoff, per_page, offset)).fetchall()
 
@@ -613,6 +612,7 @@ def api_gp_new_apps(params):
         "free": bool(r["free"]),
         "icon_url": r["icon_url"] or "",
         "url": r["url"] or f"https://play.google.com/store/apps/details?id={r['app_id']}",
+        "released": r["released"] or "",
     } for r in rows]
 
     conn.close()

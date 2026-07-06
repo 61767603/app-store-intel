@@ -107,6 +107,7 @@ def init_db():
             free        INTEGER,
             icon_url    TEXT,
             url         TEXT,
+            released    TEXT,
             created_at  TEXT NOT NULL
         );
 
@@ -195,13 +196,33 @@ def diff_new_apps(today, country):
     return new
 
 
+def parse_released(raw):
+    """将 'Jul 9, 2015' 或 'July 9, 2015' 转为 ISO 日期"""
+    import re
+    from datetime import datetime
+    if not raw:
+        return ""
+    try:
+        dt = datetime.strptime(raw, "%b %d, %Y")
+        return dt.strftime("%Y-%m-%d")
+    except ValueError:
+        pass
+    try:
+        # 尝试长月份名 July
+        dt = datetime.strptime(raw, "%B %d, %Y")
+        return dt.strftime("%Y-%m-%d")
+    except ValueError:
+        pass
+    return raw
+
+
 def fetch_app_detail(scraper, app_id, country):
     """拉单个 App 详情"""
     try:
         detail = scraper.app_get_fields(
             app_id,
             fields=["appId","title","developer","genre","score",
-                    "installs","price","free","icon","url"],
+                    "installs","price","free","icon","url","released"],
             country=country, lang="en",
         )
         return {
@@ -215,6 +236,7 @@ def fetch_app_detail(scraper, app_id, country):
             "free": 1 if detail.get("free") else 0,
             "icon_url": detail.get("icon", ""),
             "url": detail.get("url", ""),
+            "released": parse_released(detail.get("released", "")),
         }
     except Exception as e:
         print(f"      ⚠️ {app_id}: {e}")
@@ -228,11 +250,11 @@ def save_details_and_snapshot(app_id, country, detail, today):
     try:
         c.execute(
             """INSERT OR REPLACE INTO gp_app_details VALUES
-               (?,?,?,?,?,?,?,?,?,?,?)""",
+               (?,?,?,?,?,?,?,?,?,?,?,?)""",
             (detail["app_id"], detail["title"], detail["developer"],
              detail["genre"], detail["score"], detail["installs"],
              detail["price"], detail["free"], detail["icon_url"],
-             detail["url"], today),
+             detail["url"], detail.get("released", ""), today),
         )
         conn.commit()
     except Exception as e:
@@ -245,7 +267,7 @@ def main():
     parser.add_argument("--countries", type=str, default="us,jp,de",
                         help="国家代码，逗号分隔")
     parser.add_argument("--categories", type=str, default="",
-                        help="分类 ID 逗号分隔，默认全部")
+                        help="分类 ID 逗号分隔，留空=全部")
     parser.add_argument("--collection", type=str, default="TOP_FREE",
                         help="榜单类型: TOP_FREE/TOP_PAID/TOP_GROSSING")
     args = parser.parse_args()
