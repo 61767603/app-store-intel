@@ -582,9 +582,13 @@ def api_gp_new_apps(params):
     conn.row_factory = sqlite3.Row
     c = conn.cursor()
 
+    # 最近 30 天上架
+    from datetime import timedelta
+    cutoff = (date.today() - timedelta(days=30)).isoformat()
+
     total = c.execute(
-        "SELECT COUNT(*) FROM gp_seen_apps WHERE country = ?",
-        (country,)
+        "SELECT COUNT(*) FROM gp_seen_apps WHERE country = ? AND first_seen_date >= ?",
+        (country, cutoff)
     ).fetchone()[0]
 
     rows = c.execute("""
@@ -593,10 +597,10 @@ def api_gp_new_apps(params):
                d.icon_url, d.url
         FROM gp_seen_apps s
         LEFT JOIN gp_app_details d ON s.app_id = d.app_id
-        WHERE s.country = ?
+        WHERE s.country = ? AND s.first_seen_date >= ?
         ORDER BY s.first_seen_date DESC, s.app_id ASC
         LIMIT ? OFFSET ?
-    """, (country, per_page, offset)).fetchall()
+    """, (country, cutoff, per_page, offset)).fetchall()
 
     data = [{
         "app_id": r["app_id"], "first_seen_date": r["first_seen_date"],
