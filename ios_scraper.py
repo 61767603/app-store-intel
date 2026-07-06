@@ -36,6 +36,13 @@ import csv
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace", write_through=True)
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace", write_through=True)
 
+import builtins
+_print = builtins.print
+def print(*args, **kwargs):
+    kwargs.setdefault("flush", True)
+    _print(*args, **kwargs)
+builtins.print = print
+
 DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app_intel.db")
 
 # ================= 默认美国 =================
